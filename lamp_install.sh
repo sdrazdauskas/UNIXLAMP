@@ -22,7 +22,7 @@ fi
 # Install build dependencies
 echo "Installing build dependencies..."
 apt-get update
-apt-get install -y build-essential pkg-config libssl-dev cmake libncurses5-dev bison libcurl4-openssl-dev libjpeg-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev git wget tar
+apt-get install -y build-essential pkg-config libssl-dev cmake libncurses5-dev bison libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev git wget tar
 
 # Create source directory
 mkdir -p "$SRC_DIR"
@@ -49,14 +49,14 @@ install_pcre() {
     echo "PCRE2 installed."
 }
 
-# Install OpenSSL from source (NGINX dependency)
-install_openssl() {
-    echo "Installing OpenSSL..."
-    download_and_extract "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" "openssl-$OPENSSL_VERSION"
-    ./config --prefix="$INSTALL_DIR/openssl"
+# Install zlib from source (NGINX dependency)
+install_zlib() {
+    echo "Installing zlib..."
+    download_and_extract "https://zlib.net/zlib-$ZLIB_VERSION.tar.gz" "zlib-$ZLIB_VERSION"
+    ./configure --prefix="$INSTALL_DIR/zlib"
     make -j$(nproc)
     make install
-    echo "OpenSSL installed."
+    echo "zlib installed."
 }
 
 # Install NGINX
@@ -99,14 +99,14 @@ install_libxml2() {
     echo "libxml2 installed."
 }
 
-# Install zlib from source (PHP dependency)
-install_zlib() {
-    echo "Installing zlib..."
-    download_and_extract "https://zlib.net/zlib-$ZLIB_VERSION.tar.gz" "zlib-$ZLIB_VERSION"
-    ./configure --prefix="$INSTALL_DIR/zlib"
+# Install libjpeg from source (PHP dependency)
+install_libjpeg() {
+    echo "Installing libjpeg..."
+    download_and_extract "https://www.ijg.org/files/jpegsrc.v$LIBJPEG_VERSION.tar.gz" "jpeg-$LIBJPEG_VERSION"
+    ./configure --prefix="$INSTALL_DIR/libjpeg"
     make -j$(nproc)
     make install
-    echo "zlib installed."
+    echo "libjpeg installed."
 }
 
 # Install PHP
@@ -171,19 +171,23 @@ export LDFLAGS="-L$INSTALL_DIR/zlib/lib"
 export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig"
 export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$LD_LIBRARY_PATH"
 
+install_libjpeg
+export CPPFLAGS="-I$INSTALL_DIR/zlib/include -I$INSTALL_DIR/libjpeg/include"
+export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libjpeg/lib"
+export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libjpeg/lib/pkgconfig"
+export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libjpeg/lib:$LD_LIBRARY_PATH"
+
 install_libxml2
-export CPPFLAGS="-I$INSTALL_DIR/zlib/include -I$INSTALL_DIR/libxml2/include"
-export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libxml2/lib"
-export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libxml2/lib/pkgconfig"
-export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libxml2/lib:$LD_LIBRARY_PATH"
+export CPPFLAGS="-I$INSTALL_DIR/zlib/include -I$INSTALL_DIR/libjpeg/include -I$INSTALL_DIR/libxml2/include"
+export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libjpeg/lib -L$INSTALL_DIR/libxml2/lib"
+export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libjpeg/lib/pkgconfig:$INSTALL_DIR/libxml2/lib/pkgconfig"
+export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libjpeg/lib:$INSTALL_DIR/libxml2/lib:$LD_LIBRARY_PATH"
 
 install_pcre
-export CPPFLAGS="-I$INSTALL_DIR/zlib/include -I$INSTALL_DIR/libxml2/include -I$INSTALL_DIR/pcre2/include"
-export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libxml2/lib -L$INSTALL_DIR/pcre2/lib"
-export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libxml2/lib/pkgconfig:$INSTALL_DIR/pcre2/lib/pkgconfig"
-export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libxml2/lib:$INSTALL_DIR/pcre2/lib:$LD_LIBRARY_PATH"
-
-install_openssl # Don't set flags for OpenSSL as system one is already in path
+export CPPFLAGS="-I$INSTALL_DIR/zlib/include -I$INSTALL_DIR/libjpeg/include -I$INSTALL_DIR/libxml2/include -I$INSTALL_DIR/pcre2/include"
+export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libjpeg/lib -L$INSTALL_DIR/libxml2/lib -L$INSTALL_DIR/pcre2/lib"
+export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libjpeg/lib/pkgconfig:$INSTALL_DIR/libxml2/lib/pkgconfig:$INSTALL_DIR/pcre2/lib/pkgconfig"
+export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libjpeg/lib:$INSTALL_DIR/libxml2/lib:$INSTALL_DIR/pcre2/lib:$LD_LIBRARY_PATH"
 
 install_nginx
 install_mariadb
