@@ -3,9 +3,13 @@
 # Variables
 SRC_DIR="/opt/src"
 INSTALL_DIR="/opt"
-NGINX_VERSION="1.25.2"
-MARIADB_VERSION="10.11.5"
-PHP_VERSION="8.2.10"
+NGINX_VERSION="1.27.5"
+MARIADB_VERSION="11.7.2"
+PHP_VERSION="8.4.5"
+PCRE2_VERSION="10.45"
+OPENSSL_VERSION="3.5.0"
+LIBXML2_VERSION="2.14.2"
+ZLIB_VERSION="1.3.1"
 DB_USER="dbadmin"
 DB_PASSWORD="unix2025"
 REMOTE_IP="10.1.0.73"
@@ -35,22 +39,22 @@ download_and_extract() {
     cd "$SRC_DIR/$dest_dir"
 }
 
-# Install PCRE from source (NGINX dependency)
+# Install PCRE2 from source (NGINX dependency)
 install_pcre() {
-    echo "Installing PCRE..."
-    download_and_extract "https://ftp.pcre.org/pub/pcre/pcre-8.45.tar.gz" "pcre-8.45"
-    ./configure --prefix="$INSTALL_DIR/pcre"
-    make
+    echo "Installing PCRE2..."
+    download_and_extract "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$PCRE2_VERSION/pcre2-$PCRE2_VERSION.tar.gz" "pcre2-$PCRE2_VERSION"
+    ./configure --prefix="$INSTALL_DIR/pcre2"
+    make -j$(nproc)
     make install
-    echo "PCRE installed."
+    echo "PCRE2 installed."
 }
 
 # Install OpenSSL from source (NGINX dependency)
 install_openssl() {
     echo "Installing OpenSSL..."
-    download_and_extract "https://www.openssl.org/source/openssl-1.1.1u.tar.gz" "openssl-1.1.1u"
+    download_and_extract "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" "openssl-$OPENSSL_VERSION"
     ./config --prefix="$INSTALL_DIR/openssl"
-    make
+    make -j$(nproc)
     make install
     echo "OpenSSL installed."
 }
@@ -60,11 +64,11 @@ install_nginx() {
     echo "Installing NGINX..."
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
     ./configure --prefix="$INSTALL_DIR/nginx" \
-        --with-pcre="$INSTALL_DIR/pcre" \
+        --with-pcre="$INSTALL_DIR/pcre2" \
         --with-zlib="$INSTALL_DIR/zlib" \
         --with-openssl="$INSTALL_DIR/openssl" \
         --with-http_ssl_module
-    make
+    make -j$(nproc)
     make install
     "$INSTALL_DIR/nginx/sbin/nginx"
     echo "NGINX installed and started."
@@ -75,7 +79,7 @@ install_mariadb() {
     echo "Installing MariaDB..."
     download_and_extract "https://downloads.mariadb.org/interstitial/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
     cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" .
-    make
+    make -j$(nproc)
     make install
     "$INSTALL_DIR/mariadb/scripts/mysql_install_db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
     cp "$INSTALL_DIR/mariadb/support-files/mysql.server" /etc/init.d/mariadb
@@ -87,9 +91,10 @@ install_mariadb() {
 # Install libxml2 from source (PHP dependency)
 install_libxml2() {
     echo "Installing libxml2..."
-    download_and_extract "http://xmlsoft.org/sources/libxml2-2.10.3.tar.gz" "libxml2-2.10.3"
+    local major_minor=$(echo "$LIBXML2_VERSION" | cut -d. -f1,2)
+    download_and_extract "https://download.gnome.org/sources/libxml2/$major_minor/libxml2-$LIBXML2_VERSION.tar.xz" "libxml2-$LIBXML2_VERSION"
     ./configure --prefix="$INSTALL_DIR/libxml2"
-    make
+    make -j$(nproc)
     make install
     echo "libxml2 installed."
 }
@@ -97,9 +102,9 @@ install_libxml2() {
 # Install zlib from source (PHP dependency)
 install_zlib() {
     echo "Installing zlib..."
-    download_and_extract "https://zlib.net/zlib-1.2.13.tar.gz" "zlib-1.2.13"
+    download_and_extract "https://zlib.net/zlib-$ZLIB_VERSION.tar.gz" "zlib-$ZLIB_VERSION"
     ./configure --prefix="$INSTALL_DIR/zlib"
-    make
+    make -j$(nproc)
     make install
     echo "zlib installed."
 }
@@ -115,7 +120,7 @@ install_php() {
         --with-curl --with-openssl --enable-mbstring \
         --with-freetype --with-jpeg --with-png --with-xpm \
         --with-mcrypt --with-readline --enable-fpm
-    make
+    make -j$(nproc)
     make install
     cp php.ini-production "$INSTALL_DIR/php/lib/php.ini"
     "$INSTALL_DIR/php/sbin/php-fpm"
