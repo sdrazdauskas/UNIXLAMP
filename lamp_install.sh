@@ -22,7 +22,7 @@ fi
 # Install build dependencies
 echo "Installing build dependencies..."
 apt-get update
-apt-get install -y build-essential libpcre3-dev zlib1g-dev libssl-dev cmake libncurses5-dev bison libxml2-dev libcurl4-openssl-dev libjpeg-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev git wget tar
+apt-get install -y build-essential libssl-dev cmake libncurses5-dev bison libcurl4-openssl-dev libjpeg-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev git wget tar
 
 # Create source directory
 mkdir -p "$SRC_DIR"
@@ -165,14 +165,32 @@ EOF
 }
 
 # Main installation steps
-install_libxml2
 install_zlib
+export CPPFLAGS="-I$INSTALL_DIR/zlib/include"
+export LDFLAGS="-L$INSTALL_DIR/zlib/lib"
+export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig"
+export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$LD_LIBRARY_PATH"
+
+install_libxml2
+export CPPFLAGS="-I$INSTALL_DIR/zlib/include -I$INSTALL_DIR/libxml2/include"
+export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libxml2/lib"
+export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libxml2/lib/pkgconfig"
+export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libxml2/lib:$LD_LIBRARY_PATH"
+
 install_pcre
-install_openssl
+export CPPFLAGS="-I$INSTALL_DIR/zlib/include -I$INSTALL_DIR/libxml2/include -I$INSTALL_DIR/pcre2/include"
+export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libxml2/lib -L$INSTALL_DIR/pcre2/lib"
+export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libxml2/lib/pkgconfig:$INSTALL_DIR/pcre2/lib/pkgconfig"
+export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libxml2/lib:$INSTALL_DIR/pcre2/lib:$LD_LIBRARY_PATH"
+
+install_openssl # Don't set flags for OpenSSL as system one is already in path
+
 install_nginx
 install_mariadb
 install_php
 configure_nginx_php
+
+export PATH="/opt/php/bin:/opt/php/sbin:/opt/mariadb/bin:/opt/nginx/sbin:$PATH"
 
 # Test setup
 echo "Testing setup..."
