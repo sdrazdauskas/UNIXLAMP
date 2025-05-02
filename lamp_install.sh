@@ -116,7 +116,7 @@ install_php() {
     echo "Installing PHP..."
     download_and_extract "https://www.php.net/distributions/php-$PHP_VERSION.tar.gz" "php-$PHP_VERSION"
     ./configure --prefix="$INSTALL_DIR/php" \
-        --with-mysqli="$INSTALL_DIR/mariadb/bin/mysql_config" \
+        --with-mysqli \
         --with-zlib="$INSTALL_DIR/zlib" \
         --with-libxml-dir="$INSTALL_DIR/libxml2" \
         --with-curl --with-openssl --enable-mbstring \
@@ -191,6 +191,8 @@ export LDFLAGS="-L$INSTALL_DIR/zlib/lib -L$INSTALL_DIR/libjpeg/lib -L$INSTALL_DI
 export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig:$INSTALL_DIR/libjpeg/lib/pkgconfig:$INSTALL_DIR/libxml2/lib/pkgconfig:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib:$INSTALL_DIR/libjpeg/lib:$INSTALL_DIR/libxml2/lib:$INSTALL_DIR/pcre2/lib:$LD_LIBRARY_PATH"
 
+install_mariadb
+export PATH="/opt/mariadb/bin:$PATH"
 install_nginx
 install_mariadb
 install_php
