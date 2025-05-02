@@ -68,7 +68,8 @@ install_nginx() {
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
     ./configure --prefix="$INSTALL_DIR/nginx" \
         --with-http_ssl_module \
-        --with-pcre="$SRC_DIR/pcre2-$PCRE2_VERSION" # Have to give the not compiled version
+        --with-pcre \
+        --with-zlib
     make -j$(nproc)
     make install
     "$INSTALL_DIR/nginx/sbin/nginx"
