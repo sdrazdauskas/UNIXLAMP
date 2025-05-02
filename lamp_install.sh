@@ -25,7 +25,7 @@ apt-get update
 apt-get install -y build-essential openssl pkg-config libssl-dev cmake libncurses5-dev bison \
     libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev \
     git wget tar python3.11-dev python3-pip libsqlite3-dev libonig-dev libzip-dev re2c autoconf \
-    openjdk-17-jdk openjdk-17-jre groff libgnutls28-dev
+    openjdk-17-jdk openjdk-17-jre groff libgnutls28-dev libsystemd-dev
 
 # Create source directory
 mkdir -p "$SRC_DIR"
@@ -79,13 +79,13 @@ install_nginx() {
 install_mariadb() {
     echo "Installing MariaDB..."
     download_and_extract "https://downloads.mariadb.org/interstitial/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
-    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" .
+    # Enable systemd support by requesting it via a CMake flag.
+    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" -DWITH_SYSTEMD=ON .
     make -j$(nproc)
     make install
     "$INSTALL_DIR/mariadb/scripts/mysql_install_db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
 
-    # Install the systemd service file instead of an init.d script.
-    # (Check to see if the file exists; if not, fall back to the init.d script.)
+    # Install the systemd service file or fall back to init.d if not available.
     if [ -f "$INSTALL_DIR/mariadb/support-files/mariadb.service" ]; then
         sudo cp "$INSTALL_DIR/mariadb/support-files/mariadb.service" /etc/systemd/system/mariadb.service
         sudo systemctl daemon-reload
@@ -133,10 +133,11 @@ install_php() {
     make install
     
     # After installation, check if php-fpm.conf exists; if not, create it
-    if [ ! -f "$INSTALL_DIR/php/etc/php-fpm.conf" ]; then
-        echo "php-fpm.conf not found. Copying default configuration..."
-        cp "$INSTALL_DIR/php/etc/php-fpm.conf.default" "$INSTALL_DIR/php/etc/php-fpm.conf"
+    if [ ! -f "$INSTALL_DIR/php/etc/php-fpm.d/www.conf" ]; then
+        echo "www.conf not found. Copying default pool configuration..."
+        cp "$INSTALL_DIR/php/etc/php-fpm.d/www.conf.default" "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
     fi
+
     "$INSTALL_DIR/php/sbin/php-fpm"
     echo "PHP installed and started."
 }
