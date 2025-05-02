@@ -67,8 +67,6 @@ install_nginx() {
     echo "Installing NGINX..."
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
     ./configure --prefix="$INSTALL_DIR/nginx" \
-        --with-pcre="$INSTALL_DIR/pcre2" \
-        --with-zlib="$INSTALL_DIR/zlib" \
         --with-http_ssl_module
     make -j$(nproc)
     make install
