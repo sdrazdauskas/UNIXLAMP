@@ -10,7 +10,6 @@ PCRE2_VERSION="10.45"
 LIBXML2_VERSION="2.9.14"
 ZLIB_VERSION="1.3.1"
 LIBJPEG_VERSION="9f"
-OPENSSL_VERSION="3.5.0"
 DB_USER="dbadmin"
 DB_PASSWORD="unix2025"
 REMOTE_IP="10.1.0.73"
@@ -23,7 +22,7 @@ fi
 # Install build dependencies
 echo "Installing build dependencies..."
 apt-get update
-apt-get install -y build-essential openssl pkg-config libssl-dev cmake libncurses5-dev bison \
+apt-get install -y build-essential pkg-config openssl libssl-dev cmake libncurses5-dev bison \
     libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev \
     git wget tar python3.11-dev python3-pip libsqlite3-dev libonig-dev libzip-dev re2c autoconf \
     openjdk-17-jdk openjdk-17-jre groff libgnutls28-dev libsystemd-dev
@@ -63,25 +62,22 @@ install_zlib() {
     echo "zlib installed."
 }
 
-# Install OpenSSL from source (NGINX dependency)
+# Download OpenSSL from source (NGINX dependency)
 install_openssl() {
-    echo "Installing OpenSSL..."
+    echo "Downloading OpenSSL..."
     download_and_extract "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" "openssl-$OPENSSL_VERSION"
-    ./config --prefix="$INSTALL_DIR/openssl"
-    make -j$(nproc)
-    make install
-    echo "OpenSSL installed."
+    echo "OpenSSL downloaded and extracted."
 }
 
 # Install NGINX
 install_nginx() {
     echo "Installing NGINX..."
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
-    # Takes PCRE only as source code, doesn't accept build libraries
+    # Takes directories with source code only , doesn't accept build libraries or only searches normal locations
     ./configure --prefix="$INSTALL_DIR/nginx" \
-                --with-http_ssl_module \
-                --with-pcre="$SRC_DIR/pcre-$PCRE_VERSION" \
-                --with-openssl="$INSTALL_DIR/openssl"
+        --with-http_ssl_module \
+        --with-pcre="$SRC_DIR/pcre-$PCRE2_VERSION" \
+        --with-openssl="$SRC_DIR/openssl-$OPENSSL_VERSION"
     make -j$(nproc)
     make install
     "$INSTALL_DIR/nginx/sbin/nginx"
