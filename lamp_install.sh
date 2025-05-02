@@ -197,6 +197,12 @@ export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/pcre2/lib"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
+# Create a group for mysql if it doesn't exist
+getent group mysql || groupadd mysql
+
+# Create a mysql user with no login shell and assign it to the mysql group
+getent passwd mysql || useradd -r -g mysql -s /bin/false mysql
+
 install_nginx
 install_mariadb
 export PATH="/opt/mariadb/bin:$PATH"
