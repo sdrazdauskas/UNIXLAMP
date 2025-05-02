@@ -80,7 +80,7 @@ install_mariadb() {
     echo "Installing MariaDB..."
     download_and_extract "https://downloads.mariadb.org/interstitial/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
     # Enable systemd support by requesting it via a CMake flag.
-    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" -DWITH_SYSTEMD=ON .
+    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" -DWITH_SYSTEMD=yes .
     make -j$(nproc)
     make install
     "$INSTALL_DIR/mariadb/scripts/mysql_install_db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
@@ -185,7 +185,6 @@ export CPPFLAGS="${CPPFLAGS:-}"
 export LDFLAGS="${LDFLAGS:-}"
 export PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"
 
-
 # Main installation steps
 install_zlib
 export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/zlib/include"
@@ -210,6 +209,10 @@ export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/pcre2/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/pcre2/lib"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
+
+echo "test123"
+echo $PKG_CONFIG_PATH
+
 
 # Create a group for mysql if it doesn't exist
 getent group mysql || groupadd mysql
