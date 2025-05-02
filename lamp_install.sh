@@ -24,7 +24,8 @@ echo "Installing build dependencies..."
 apt-get update
 apt-get install -y build-essential openssl pkg-config libssl-dev cmake libncurses5-dev bison \
     libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev \
-    git wget tar python3.11-dev python3-pip libsqlite3-dev libonig-dev libzip-dev re2c autoconf
+    git wget tar python3.11-dev python3-pip libsqlite3-dev libonig-dev libzip-dev re2c autoconf \
+    openjdk-17-jdk openjdk-17-jre libboost-all-dev groff
 
 # Create source directory
 mkdir -p "$SRC_DIR"
@@ -117,10 +118,9 @@ install_php() {
     ./configure --prefix="$INSTALL_DIR/php" \
         --with-mysqli \
         --with-zlib="$INSTALL_DIR/zlib" \
-        --with-libxml-dir="$INSTALL_DIR/libxml2" \
         --with-curl --with-openssl --enable-mbstring \
-        --with-freetype --with-jpeg --with-png --with-xpm \
-        --with-mcrypt --with-readline --enable-fpm
+        --with-freetype --with-jpeg --with-xpm \
+        --with-readline --enable-fpm
     make -j$(nproc)
     make install
     cp php.ini-production "$INSTALL_DIR/php/lib/php.ini"
