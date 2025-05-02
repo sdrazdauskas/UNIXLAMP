@@ -24,7 +24,7 @@ echo "Installing build dependencies..."
 apt-get update
 apt-get install -y build-essential openssl pkg-config libssl-dev cmake libncurses5-dev bison \
     libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev \
-    git wget tar python3.11-dev libsqlite3-dev libonig-dev libzip-dev re2c autoconf
+    git wget tar python3.11-dev python3-pip libsqlite3-dev libonig-dev libzip-dev re2c autoconf
 
 # Create source directory
 mkdir -p "$SRC_DIR"
