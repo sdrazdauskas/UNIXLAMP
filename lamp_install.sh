@@ -68,7 +68,6 @@ install_nginx() {
     ./configure --prefix="$INSTALL_DIR/nginx" \
         --with-pcre="$INSTALL_DIR/pcre2" \
         --with-zlib="$INSTALL_DIR/zlib" \
-        --with-openssl="$INSTALL_DIR/openssl" \
         --with-http_ssl_module
     make -j$(nproc)
     make install
