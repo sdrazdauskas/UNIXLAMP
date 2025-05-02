@@ -197,7 +197,7 @@ export PATH="/opt/mariadb/bin:$PATH"
 install_php
 configure_nginx_php
 
-export PATH="/opt/php/bin:/opt/php/sbin:/opt/mariadb/bin:/opt/nginx/sbin:$PATH"
+export PATH="/opt/php/bin:/opt/php/sbin:/opt/nginx/sbin:$PATH"
 
 # Test setup
 echo "Testing setup..."
