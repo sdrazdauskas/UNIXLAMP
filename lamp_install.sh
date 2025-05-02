@@ -131,7 +131,12 @@ install_php() {
         --with-readline --enable-fpm
     make -j$(nproc)
     make install
-    cp php.ini-production "$INSTALL_DIR/php/lib/php.ini"
+    
+    # After installation, check if php-fpm.conf exists; if not, create it
+    if [ ! -f "$INSTALL_DIR/php/etc/php-fpm.conf" ]; then
+        echo "php-fpm.conf not found. Copying default configuration..."
+        cp "$INSTALL_DIR/php/etc/php-fpm.conf.default" "$INSTALL_DIR/php/etc/php-fpm.conf"
+    fi
     "$INSTALL_DIR/php/sbin/php-fpm"
     echo "PHP installed and started."
 }
