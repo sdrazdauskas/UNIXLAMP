@@ -88,22 +88,41 @@ install_nginx() {
 # Install MariaDB
 install_mariadb() {
     echo "Installing MariaDB..."
+    
+    # Download and extract the MariaDB source code.
     download_and_extract "https://downloads.mariadb.org/interstitial/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
-    # Enable systemd support by requesting it via a CMake flag.
-    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" -DWITH_SYSTEMD=yes .
+    
+    # Configure and build MariaDB
+    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" .
     make -j$(nproc)
     make install
+
     "$INSTALL_DIR/mariadb/scripts/mysql_install_db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
 
-    # Install the systemd service file or fall back to init.d if not available.
-    if [ -f "$INSTALL_DIR/mariadb/support-files/mariadb.service" ]; then
-        cp "$INSTALL_DIR/mariadb/support-files/mariadb.service" /etc/systemd/system/mariadb.service
-        systemctl daemon-reload
-        systemctl start mariadb
-    else
-        cp "$INSTALL_DIR/mariadb/support-files/mysql.server" /etc/init.d/mariadb
-        service mariadb start
-    fi
+    # Create a custom systemd service unit for MariaDB.
+    cat > /etc/systemd/system/mariadb.service <<EOF
+[Unit]
+Description=MariaDB Database Server
+After=network.target
+
+[Service]
+Type=forking
+User=mysql
+Group=mysql
+ExecStart=$INSTALL_DIR/mariadb/bin/mysqld_safe --datadir=$INSTALL_DIR/mariadb/data
+ExecStop=$INSTALL_DIR/mariadb/bin/mysqladmin shutdown
+TimeoutSec=600
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Reload systemd, enable the service at boot, and start it.
+    systemctl daemon-reload
+    systemctl enable mariadb
+    systemctl start mariadb
+
     "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
     echo "MariaDB installed and configured."
 }
