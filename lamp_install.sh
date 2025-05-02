@@ -77,7 +77,7 @@ install_nginx() {
     # Takes directories with source code only , doesn't accept build libraries or only searches normal locations
     ./configure --prefix="$INSTALL_DIR/nginx" \
         --with-http_ssl_module \
-        --with-pcre="$SRC_DIR/pcre-$PCRE2_VERSION" \
+        --with-pcre="$SRC_DIR/pcre2-$PCRE2_VERSION" \
         --with-openssl="$SRC_DIR/openssl-$OPENSSL_VERSION"
     make -j$(nproc)
     make install
