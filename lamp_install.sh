@@ -83,9 +83,18 @@ install_mariadb() {
     make -j$(nproc)
     make install
     "$INSTALL_DIR/mariadb/scripts/mysql_install_db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
-    cp "$INSTALL_DIR/mariadb/support-files/mysql.server" /etc/init.d/mariadb
-    service mariadb start
-    "$INSTALL_DIR/mariadb/bin/mysql" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
+
+    # Install the systemd service file instead of an init.d script.
+    # (Check to see if the file exists; if not, fall back to the init.d script.)
+    if [ -f "$INSTALL_DIR/mariadb/support-files/mariadb.service" ]; then
+        sudo cp "$INSTALL_DIR/mariadb/support-files/mariadb.service" /etc/systemd/system/mariadb.service
+        sudo systemctl daemon-reload
+        sudo systemctl start mariadb
+    else
+        sudo cp "$INSTALL_DIR/mariadb/support-files/mysql.server" /etc/init.d/mariadb
+        sudo service mariadb start
+    fi
+    "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
     echo "MariaDB installed and configured."
 }
 
