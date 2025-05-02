@@ -25,7 +25,7 @@ apt-get update
 apt-get install -y build-essential openssl pkg-config libssl-dev cmake libncurses5-dev bison \
     libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev libmcrypt-dev libreadline-dev \
     git wget tar python3.11-dev python3-pip libsqlite3-dev libonig-dev libzip-dev re2c autoconf \
-    openjdk-17-jdk openjdk-17-jre libboost-all-dev groff libgnutls28-dev
+    openjdk-17-jdk openjdk-17-jre groff libgnutls28-dev
 
 # Create source directory
 mkdir -p "$SRC_DIR"
@@ -68,8 +68,7 @@ install_nginx() {
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
     ./configure --prefix="$INSTALL_DIR/nginx" \
         --with-http_ssl_module \
-        --with-pcre \
-        --with-zlib
+        --with-pcre
     make -j$(nproc)
     make install
     "$INSTALL_DIR/nginx/sbin/nginx"
