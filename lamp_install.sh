@@ -67,8 +67,8 @@ install_nginx() {
     echo "Installing NGINX..."
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
     ./configure --prefix="$INSTALL_DIR/nginx" \
-        --with-http_ssl_module \
-        --with-pcre
+                --with-http_ssl_module \
+                --with-pcre="$SRC_DIR/pcre-$PCRE_VERSION" # Takes only source code, doesn't accept build libraries
     make -j$(nproc)
     make install
     "$INSTALL_DIR/nginx/sbin/nginx"
@@ -210,14 +210,8 @@ export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/pcre2/lib"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
-echo "test123"
-echo $PKG_CONFIG_PATH
-
-
-# Create a group for mysql if it doesn't exist
-getent group mysql || groupadd mysql
-
 # Create a mysql user with no login shell and assign it to the mysql group
+getent group mysql || groupadd mysql
 getent passwd mysql || useradd -r -g mysql -s /bin/false mysql
 
 install_nginx
