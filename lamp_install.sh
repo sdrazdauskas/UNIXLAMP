@@ -10,6 +10,7 @@ PCRE2_VERSION="10.45"
 LIBXML2_VERSION="2.9.14"
 ZLIB_VERSION="1.3.1"
 LIBJPEG_VERSION="9f"
+OPENSSL_VERSION="3.5.0"
 DB_USER="dbadmin"
 DB_PASSWORD="unix2025"
 REMOTE_IP="10.1.0.73"
@@ -62,13 +63,25 @@ install_zlib() {
     echo "zlib installed."
 }
 
+# Install OpenSSL from source (NGINX dependency)
+install_openssl() {
+    echo "Installing OpenSSL..."
+    download_and_extract "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" "openssl-$OPENSSL_VERSION"
+    ./config --prefix="$INSTALL_DIR/openssl"
+    make -j$(nproc)
+    make install
+    echo "OpenSSL installed."
+}
+
 # Install NGINX
 install_nginx() {
     echo "Installing NGINX..."
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
+    # Takes PCRE only as source code, doesn't accept build libraries
     ./configure --prefix="$INSTALL_DIR/nginx" \
                 --with-http_ssl_module \
-                --with-pcre="$SRC_DIR/pcre-$PCRE_VERSION" # Takes only source code, doesn't accept build libraries
+                --with-pcre="$SRC_DIR/pcre-$PCRE_VERSION" \
+                --with-openssl="$INSTALL_DIR/openssl"
     make -j$(nproc)
     make install
     "$INSTALL_DIR/nginx/sbin/nginx"
@@ -87,12 +100,12 @@ install_mariadb() {
 
     # Install the systemd service file or fall back to init.d if not available.
     if [ -f "$INSTALL_DIR/mariadb/support-files/mariadb.service" ]; then
-        sudo cp "$INSTALL_DIR/mariadb/support-files/mariadb.service" /etc/systemd/system/mariadb.service
-        sudo systemctl daemon-reload
-        sudo systemctl start mariadb
+        cp "$INSTALL_DIR/mariadb/support-files/mariadb.service" /etc/systemd/system/mariadb.service
+        systemctl daemon-reload
+        systemctl start mariadb
     else
-        sudo cp "$INSTALL_DIR/mariadb/support-files/mysql.server" /etc/init.d/mariadb
-        sudo service mariadb start
+        cp "$INSTALL_DIR/mariadb/support-files/mysql.server" /etc/init.d/mariadb
+        service mariadb start
     fi
     "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
     echo "MariaDB installed and configured."
@@ -209,6 +222,8 @@ export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/pcre2/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/pcre2/lib"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
+
+install_openssl
 
 # Create a mysql user with no login shell and assign it to the mysql group
 getent group mysql || groupadd mysql
