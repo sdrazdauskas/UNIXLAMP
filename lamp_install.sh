@@ -103,7 +103,7 @@ install_mariadb() {
     getent group mysql || groupadd mysql
     getent passwd mysql || useradd -r -g mysql -s /bin/false mysql
 
-    "$INSTALL_DIR/mariadb/scripts/mysql_install_db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
+    "$INSTALL_DIR/mariadb/scripts/mariadb-install-db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
 
     cat > /etc/systemd/system/mariadb.service <<EOF
 [Unit]
