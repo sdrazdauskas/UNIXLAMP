@@ -94,10 +94,10 @@ install_jemalloc() {
 
 install_boost() {
     echo "Installing Boost version $BOOST_VERSION..."
-    local boost_archive="boost_1_82_0.tar.gz"
-    download_and_extract "https://boostorg.jfrog.io/artifactory/main/release/$BOOST_VERSION/source/$boost_archive" "boost_1_82_0"
-    # Now that the archive is extracted into SRC_DIR/boost_1_82_0, move into that directory:
-    cd "$SRC_DIR/boost_1_82_0"
+    boost_dir="boost_$(echo $BOOST_VERSION | tr '.' '_')"
+    boost_archive="${boost_dir}.tar.gz"
+    download_and_extract "https://archives.boost.io/release/$BOOST_VERSION/source/$boost_archive" "$boost_dir"
+    cd "$SRC_DIR/$boost_dir"
     ./bootstrap.sh --prefix="/opt/boost"
     ./b2 install
 }
@@ -111,33 +111,6 @@ install_nginx() {
         --with-openssl="$SRC_DIR/openssl-$OPENSSL_VERSION"
     make -j$(nproc)
     make install
-
-    cat > /etc/systemd/system/nginx.service <<-EOF
-[Unit]
-Description=NGINX Web Server
-After=network.target
-
-[Service]
-ExecStart=/opt/nginx/sbin/nginx -g "daemon off;"
-ExecReload=/opt/nginx/sbin/nginx -s reload
-ExecStop=/opt/nginx/sbin/nginx -s quit
-Restart=on-failure
-User=www-data
-Group=www-data
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    systemctl daemon-reload
-    systemctl enable nginx
-    systemctl start nginx
-
-    while ! systemctl is-active --quiet nginx; do
-        echo "Waiting for NGINX to start..."
-        sleep 1
-    done
-    echo "NGINX is now active."
 }
 
 install_mariadb() {
@@ -266,7 +239,34 @@ EOF
 
     mkdir -p /var/www/html
     echo "<?php phpinfo(); ?>" > /var/www/html/info.php
-    "$INSTALL_DIR/nginx/sbin/nginx"
+
+    cat > /etc/systemd/system/nginx.service <<-EOF
+[Unit]
+Description=The NGINX HTTP and reverse proxy server
+After=syslog.target network-online.target remote-fs.target nss-lookup.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx.pid
+ExecStartPre=/opt/nginx/sbin/nginx -t
+ExecStart=/opt/nginx/sbin/nginx
+ExecReload=/opt/nginx/sbin/nginx -s reload
+ExecStop=/bin/kill -s QUIT \$MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload
+    systemctl enable nginx
+    systemctl start nginx
+
+    while ! systemctl is-active --quiet nginx; do
+        echo "Waiting for NGINX to start..."
+        sleep 1
+    done
+    echo "NGINX is now active."
 }
 
 # Environment
@@ -274,6 +274,7 @@ export LD_LIBRARY_PATH=""
 export CPPFLAGS=""
 export LDFLAGS=""
 export PKG_CONFIG_PATH=""
+export LIBRARY_PATH=""
 
 # Install steps with env chaining
 install_zlib
@@ -302,7 +303,7 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
 install_openssl
 install_jemalloc
-export LD_LIBRARY_PATH="/opt/jemalloc/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$INSTALL_DIR/jemalloc/lib:$LD_LIBRARY_PATH"
 
 install_boost
 export CPPFLAGS="-I$INSTALL_DIR/boost/include $CPPFLAGS"
