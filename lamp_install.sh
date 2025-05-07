@@ -12,6 +12,8 @@ LIBXML2_VERSION="2.9.14"
 ZLIB_VERSION="1.3.1"
 OPENSSL_VERSION="3.5.0"
 LIBJPEG_VERSION="9f"
+JEMALLOC_VERSION="5.3.0"
+BOOST_VERSION="1.82.0"
 DB_USER="dbadmin"
 DB_PASSWORD="Unix2025"
 REMOTE_IP="10.1.0.73"
@@ -81,6 +83,25 @@ install_openssl() {
     download_and_extract "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" "openssl-$OPENSSL_VERSION"
 }
 
+install_jemalloc() {
+    echo "Installing jemalloc version $JEMALLOC_VERSION..."
+    local jemalloc_archive="jemalloc-$JEMALLOC_VERSION.tar.bz2"
+    download_and_extract "https://github.com/jemalloc/jemalloc/releases/download/$JEMALLOC_VERSION/$jemalloc_archive" "jemalloc-$JEMALLOC_VERSION"
+    ./configure --prefix="/opt/jemalloc"
+    make -j$(nproc)
+    make install
+}
+
+install_boost() {
+    echo "Installing Boost version $BOOST_VERSION..."
+    local boost_archive="boost_1_82_0.tar.gz"
+    download_and_extract "https://boostorg.jfrog.io/artifactory/main/release/$BOOST_VERSION/source/$boost_archive" "boost_1_82_0"
+    # Now that the archive is extracted into SRC_DIR/boost_1_82_0, move into that directory:
+    cd "$SRC_DIR/boost_1_82_0"
+    ./bootstrap.sh --prefix="/opt/boost"
+    ./b2 install
+}
+
 install_nginx() {
     echo "Installing NGINX..."
     download_and_extract "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" "nginx-$NGINX_VERSION"
@@ -122,7 +143,10 @@ EOF
 install_mariadb() {
     echo "Installing MariaDB..."
     download_and_extract "https://mirror.mariadb.org/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
-    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" .
+    cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" \
+          -DWITH_JEMALLOC=ON \
+          -DJEMALLOC_LIBRARY="/opt/jemalloc/lib/libjemalloc.so" \
+          -DBOOST_ROOT="/opt/boost" .
     make -j$(nproc)
     make install
 
@@ -277,6 +301,12 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
 install_openssl
+install_jemalloc
+export LD_LIBRARY_PATH="/opt/jemalloc/lib:$LD_LIBRARY_PATH"
+
+install_boost
+export CPPFLAGS="-I$INSTALL_DIR/boost/include $CPPFLAGS"
+export LIBRARY_PATH="$INSTALL_DIR/boost/lib:$LIBRARY_PATH"
 
 # Web server user
 getent group www-data || groupadd www-data
@@ -303,3 +333,4 @@ else
 fi
 
 echo "Installation complete."
+exit 0
