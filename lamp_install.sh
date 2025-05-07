@@ -124,7 +124,7 @@ EOF
     systemctl daemon-reload
     systemctl enable mariadb
     systemctl start mariadb
-
+    sleep 5
     "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
 }
 
