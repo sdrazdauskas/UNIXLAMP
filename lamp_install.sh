@@ -153,6 +153,8 @@ install_php() {
     if [ ! -f "$INSTALL_DIR/php/etc/php-fpm.d/www.conf" ]; then
         mkdir -p "$INSTALL_DIR/php/etc/php-fpm.d"
         cp "$SRC_DIR/php-$PHP_VERSION/sapi/fpm/www.conf" "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
+        sed -i 's/user = nobody/user = www-data/' "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
+        sed -i 's/group = nobody/group = www-data/' "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
     fi
 
     "$INSTALL_DIR/php/sbin/php-fpm"
@@ -223,6 +225,9 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
 install_openssl
 
+# Web user
+getent group www-data || groupadd www-data
+getent passwd www-data || useradd --system --no-create-home --gid www-data www-data
 install_nginx
 install_mariadb
 install_php
