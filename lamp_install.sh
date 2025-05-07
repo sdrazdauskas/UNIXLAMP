@@ -195,19 +195,21 @@ export PKG_CONFIG_PATH=""
 
 # Install steps with env chaining
 install_zlib
-export CPPFLAGS="-I$INSTALL_DIR/zlib/include"
-export LDFLAGS="-L$INSTALL_DIR/zlib/lib"
-export LD_LIBRARY_PATH="$INSTALL_DIR/zlib/lib"
-export PKG_CONFIG_PATH="$INSTALL_DIR/zlib/lib/pkgconfig"
+export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/zlib/include"
+export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/zlib/lib"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/zlib/lib/pkgconfig"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/zlib/lib"
 
 install_libjpeg
 export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/libjpeg/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/libjpeg/lib"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/libjpeg/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/libjpeg/lib"
 
 install_libxml2
 export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/libxml2/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/libxml2/lib"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/libxml2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/libxml2/lib"
 
 install_pcre
@@ -217,6 +219,7 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
 install_openssl
+
 install_nginx
 install_mariadb
 install_php
