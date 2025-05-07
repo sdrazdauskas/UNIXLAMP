@@ -37,7 +37,7 @@ download_and_extract() {
     local dir=$2
     local archive="$SRC_DIR/$(basename "$url")"
     echo "Downloading $(basename "$url")..."
-    wget -q --show-progress -O "$archive" "$url"
+    wget -q -O "$archive" "$url"
     echo "Extracting $(basename "$url")..."
     tar -xf "$archive" -C "$SRC_DIR"
     cd "$SRC_DIR/$dir"
