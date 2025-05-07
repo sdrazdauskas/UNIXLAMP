@@ -238,7 +238,7 @@ export PATH="/opt/nginx/sbin:/opt/php/bin:/opt/php/sbin:/opt/mariadb/bin:$PATH"
 ln -sf /opt/nginx/sbin/nginx /usr/local/bin/nginx
 ln -sf /opt/php/bin/php /usr/local/bin/php
 ln -sf /opt/php/sbin/php-fpm /usr/local/bin/php-fpm
-ln -sf /opt/mariadb/bin/mysql /usr/local/bin/mysql
+ln -sf /opt/mariadb/bin/mariadb /usr/local/bin/mysql
 
 # Test setup
 echo "Testing LNMP setup..."
