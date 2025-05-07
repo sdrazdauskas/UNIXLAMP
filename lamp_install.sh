@@ -97,7 +97,7 @@ install_nginx() {
     After=network.target
 
     [Service]
-    ExecStart=/opt/nginx/sbin/nginx -g 'daemon off;'
+    ExecStart=/opt/nginx/sbin/nginx -g "daemon off;"
     ExecReload=/opt/nginx/sbin/nginx -s reload
     ExecStop=/opt/nginx/sbin/nginx -s quit
     Restart=on-failure
@@ -107,6 +107,7 @@ install_nginx() {
     [Install]
     WantedBy=multi-user.target
 EOF
+
     systemctl daemon-reload
     systemctl enable nginx
     systemctl start nginx
