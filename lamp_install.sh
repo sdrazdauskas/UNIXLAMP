@@ -90,6 +90,32 @@ install_nginx() {
         --with-openssl="$SRC_DIR/openssl-$OPENSSL_VERSION"
     make -j$(nproc)
     make install
+
+    cat > /etc/systemd/system/nginx.service <<-EOF
+    [Unit]
+    Description=NGINX Web Server
+    After=network.target
+
+    [Service]
+    ExecStart=/opt/nginx/sbin/nginx -g 'daemon off;'
+    ExecReload=/opt/nginx/sbin/nginx -s reload
+    ExecStop=/opt/nginx/sbin/nginx -s quit
+    Restart=on-failure
+    User=www-data
+    Group=www-data
+
+    [Install]
+    WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload
+    systemctl enable nginx
+    systemctl start nginx
+
+    while ! systemctl is-active --quiet nginx; do
+        echo "Waiting for NGINX to start..."
+        sleep 1
+    done
+    echo "NGINX is now active."
 }
 
 install_mariadb() {
@@ -105,22 +131,21 @@ install_mariadb() {
 
     "$INSTALL_DIR/mariadb/scripts/mariadb-install-db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
 
-    cat > /etc/systemd/system/mariadb.service <<EOF
-[Unit]
-Description=MariaDB
-After=network.target
+    cat > /etc/systemd/system/mariadb.service <<-EOF
+    [Unit]
+    Description=MariaDB
+    After=network.target
 
-[Service]
-User=mysql
-Group=mysql
-ExecStart=$INSTALL_DIR/mariadb/bin/mysqld_safe --datadir=$INSTALL_DIR/mariadb/data
-ExecStop=$INSTALL_DIR/mariadb/bin/mysqladmin shutdown
-Restart=on-failure
+    [Service]
+    User=mysql
+    Group=mysql
+    ExecStart=$INSTALL_DIR/mariadb/bin/mysqld_safe --datadir=$INSTALL_DIR/mariadb/data
+    ExecStop=$INSTALL_DIR/mariadb/bin/mysqladmin shutdown
+    Restart=on-failure
 
-[Install]
-WantedBy=multi-user.target
+    [Install]
+    WantedBy=multi-user.target
 EOF
-
     systemctl daemon-reload
     systemctl enable mariadb
     systemctl start mariadb
@@ -157,34 +182,61 @@ install_php() {
         sed -i 's/group = nobody/group = www-data/' "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
     fi
 
-    "$INSTALL_DIR/php/sbin/php-fpm"
+    # Create a systemd service unit for PHP-FPM
+    cat > /etc/systemd/system/php-fpm.service <<-EOF
+    [Unit]
+    Description=PHP-FPM Service
+    After=network.target
+
+    [Service]
+    ExecStart=$INSTALL_DIR/php/sbin/php-fpm --nodaemonize
+    ExecReload=/bin/kill -USR2 \$MAINPID
+    User=www-data
+    Group=www-data
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable php-fpm
+    systemctl start php-fpm
+
+    # Wait until PHP-FPM is active before proceeding
+    while ! systemctl is-active --quiet php-fpm; do
+        echo "Waiting for PHP-FPM to start..."
+        sleep 1
+    done
+    echo "PHP-FPM is now active."
 }
 
 configure_nginx_php() {
     echo "Configuring NGINX with PHP support..."
-    cat > "$INSTALL_DIR/nginx/conf/nginx.conf" <<EOF
-worker_processes 1;
-events { worker_connections 1024; }
+    cat > "$INSTALL_DIR/nginx/conf/nginx.conf" <<-EOF
+    user www-data;
+    worker_processes 1;
+    events { worker_connections 1024; }
 
-http {
-    include       mime.types;
-    default_type  application/octet-stream;
-    sendfile        on;
+    http {
+        include       mime.types;
+        default_type  application/octet-stream;
+        sendfile      on;
 
-    server {
-        listen 80;
-        server_name localhost;
+        server {
+            listen 80;
+            server_name localhost;
 
-        root /var/www/html;
-        index index.php index.html;
+            root /var/www/html;
+            index index.php index.html;
 
-        location ~ \.php\$ {
-            fastcgi_pass   127.0.0.1:9000;
-            fastcgi_index  index.php;
-            include        fastcgi.conf;
+            location ~ \.php\$ {
+                fastcgi_pass   127.0.0.1:9000;
+                fastcgi_index  index.php;
+                include        fastcgi.conf;
+            }
         }
     }
-}
 EOF
 
     mkdir -p /var/www/html
@@ -225,9 +277,10 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
 install_openssl
 
-# Web user
+# Web server user
 getent group www-data || groupadd www-data
 getent passwd www-data || useradd --system --no-create-home --gid www-data www-data
+
 install_nginx
 install_mariadb
 install_php
