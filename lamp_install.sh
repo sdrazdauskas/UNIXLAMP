@@ -124,7 +124,10 @@ EOF
     systemctl daemon-reload
     systemctl enable mariadb
     systemctl start mariadb
-    sleep 5
+    echo "Waiting for MariaDB to be ready..."
+    while ! "$INSTALL_DIR/mariadb/bin/mysqladmin" ping --silent --host=127.0.0.1; do
+        sleep 1
+    done
     "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
 }
 
