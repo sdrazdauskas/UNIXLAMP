@@ -253,6 +253,12 @@ configure_nginx_php
 
 export PATH="/opt/php/bin:/opt/php/sbin:/opt/nginx/sbin:$PATH"
 
+# Create symbolic links
+sudo ln -s /opt/nginx/sbin/nginx /usr/local/bin/nginx
+sudo ln -s /opt/php/bin/php /usr/local/bin/php
+sudo ln -s /opt/php/sbin/php-fpm /usr/local/bin/php-fpm
+sudo ln -s /opt/mariadb/bin/mysql /usr/local/bin/mysql
+
 # Test setup
 echo "Testing setup..."
 curl -s http://localhost/info.php | grep -q "PHP Version" && echo "LAMP stack installed successfully and is working!" || echo "LAMP stack installation failed."
