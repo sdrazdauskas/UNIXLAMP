@@ -211,6 +211,11 @@ export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/libxml2/lib"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/libxml2/lib"
 
 install_pcre
+export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/pcre2/include"
+export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/pcre2/lib"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
+
 install_openssl
 install_nginx
 install_mariadb
