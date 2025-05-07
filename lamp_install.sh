@@ -92,20 +92,20 @@ install_nginx() {
     make install
 
     cat > /etc/systemd/system/nginx.service <<-EOF
-    [Unit]
-    Description=NGINX Web Server
-    After=network.target
+[Unit]
+Description=NGINX Web Server
+After=network.target
 
-    [Service]
-    ExecStart=/opt/nginx/sbin/nginx -g "daemon off;"
-    ExecReload=/opt/nginx/sbin/nginx -s reload
-    ExecStop=/opt/nginx/sbin/nginx -s quit
-    Restart=on-failure
-    User=www-data
-    Group=www-data
+[Service]
+ExecStart=/opt/nginx/sbin/nginx -g "daemon off;"
+ExecReload=/opt/nginx/sbin/nginx -s reload
+ExecStop=/opt/nginx/sbin/nginx -s quit
+Restart=on-failure
+User=www-data
+Group=www-data
 
-    [Install]
-    WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 EOF
 
     systemctl daemon-reload
@@ -133,19 +133,19 @@ install_mariadb() {
     "$INSTALL_DIR/mariadb/scripts/mariadb-install-db" --user=mysql --basedir="$INSTALL_DIR/mariadb" --datadir="$INSTALL_DIR/mariadb/data"
 
     cat > /etc/systemd/system/mariadb.service <<-EOF
-    [Unit]
-    Description=MariaDB
-    After=network.target
+[Unit]
+Description=MariaDB
+After=network.target
 
-    [Service]
-    User=mysql
-    Group=mysql
-    ExecStart=$INSTALL_DIR/mariadb/bin/mysqld_safe --datadir=$INSTALL_DIR/mariadb/data
-    ExecStop=$INSTALL_DIR/mariadb/bin/mysqladmin shutdown
-    Restart=on-failure
+[Service]
+User=mysql
+Group=mysql
+ExecStart=$INSTALL_DIR/mariadb/bin/mysqld_safe --datadir=$INSTALL_DIR/mariadb/data
+ExecStop=$INSTALL_DIR/mariadb/bin/mysqladmin shutdown
+Restart=on-failure
 
-    [Install]
-    WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 EOF
     systemctl daemon-reload
     systemctl enable mariadb
@@ -185,19 +185,19 @@ install_php() {
 
     # Create a systemd service unit for PHP-FPM
     cat > /etc/systemd/system/php-fpm.service <<-EOF
-    [Unit]
-    Description=PHP-FPM Service
-    After=network.target
+[Unit]
+Description=PHP-FPM Service
+After=network.target
 
-    [Service]
-    ExecStart=$INSTALL_DIR/php/sbin/php-fpm --nodaemonize
-    ExecReload=/bin/kill -USR2 \$MAINPID
-    User=www-data
-    Group=www-data
-    Restart=always
+[Service]
+ExecStart=$INSTALL_DIR/php/sbin/php-fpm --nodaemonize
+ExecReload=/bin/kill -USR2 \$MAINPID
+User=www-data
+Group=www-data
+Restart=always
 
-    [Install]
-    WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 EOF
 
     systemctl daemon-reload
@@ -215,29 +215,29 @@ EOF
 configure_nginx_php() {
     echo "Configuring NGINX with PHP support..."
     cat > "$INSTALL_DIR/nginx/conf/nginx.conf" <<-EOF
-    user www-data;
-    worker_processes 1;
-    events { worker_connections 1024; }
+user www-data;
+worker_processes 1;
+events { worker_connections 1024; }
 
-    http {
-        include       mime.types;
-        default_type  application/octet-stream;
-        sendfile      on;
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile      on;
 
-        server {
-            listen 80;
-            server_name localhost;
+    server {
+        listen 80;
+        server_name localhost;
 
-            root /var/www/html;
-            index index.php index.html;
+        root /var/www/html;
+        index index.php index.html;
 
-            location ~ \.php\$ {
-                fastcgi_pass   127.0.0.1:9000;
-                fastcgi_index  index.php;
-                include        fastcgi.conf;
-            }
+        location ~ \.php\$ {
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            include        fastcgi.conf;
         }
     }
+}
 EOF
 
     mkdir -p /var/www/html
