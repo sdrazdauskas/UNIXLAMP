@@ -26,7 +26,7 @@ fi
 apt-get update
 apt-get install -y build-essential pkg-config cmake bison git wget tar \
     libncurses5-dev libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev \
-    libmcrypt-dev libreadline-dev libonig-dev libzip-dev re2c autoconf \
+    libmcrypt-dev libreadline-dev libonig-dev libzip-dev re2c autoconf openssl libssl-dev \
     python3.11-dev python3-pip openjdk-17-jdk libsqlite3-dev libgnutls28-dev libsystemd-dev xz-utils
 
 # Create source directory
