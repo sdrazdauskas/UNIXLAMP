@@ -98,7 +98,7 @@ install_jemalloc() {
     echo "Installing jemalloc version $JEMALLOC_VERSION..."
     local jemalloc_archive="jemalloc-$JEMALLOC_VERSION.tar.bz2"
     download_and_extract "https://github.com/jemalloc/jemalloc/releases/download/$JEMALLOC_VERSION/$jemalloc_archive" "jemalloc-$JEMALLOC_VERSION"
-    ./configure --prefix="/opt/jemalloc"
+    ./configure --prefix="$INSTALL_DIR/jemalloc"
     make -j$(nproc)
     make install
 }
@@ -109,7 +109,7 @@ install_boost() {
     boost_archive="${boost_dir}.tar.gz"
     download_and_extract "https://archives.boost.io/release/$BOOST_VERSION/source/$boost_archive" "$boost_dir"
     cd "$SRC_DIR/$boost_dir"
-    ./bootstrap.sh --prefix="/opt/boost"
+    ./bootstrap.sh --prefix="$INSTALL_DIR/boost"
     ./b2 install
 }
 
@@ -122,8 +122,8 @@ install_nginx() {
         --with-openssl="$SRC_DIR/openssl-$OPENSSL_VERSION"
     make -j$(nproc)
     make install
-    chown -R www-data:www-data /opt/nginx/conf
-    chmod -R 755 /opt/nginx/conf
+    chown -R www-data:www-data $INSTALL_DIR/nginx/conf
+    chmod -R 755 $INSTALL_DIR/nginx/conf
 }
 
 install_mariadb() {
@@ -131,8 +131,8 @@ install_mariadb() {
     download_and_extract "https://mirror.mariadb.org/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
     cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" \
           -DWITH_JEMALLOC=ON \
-          -DJEMALLOC_LIBRARY="/opt/jemalloc/lib/libjemalloc.so" \
-          -DBOOST_ROOT="/opt/boost" .
+          -DJEMALLOC_LIBRARY="$INSTALL_DIR/jemalloc/lib/libjemalloc.so" \
+          -DBOOST_ROOT="$INSTALL_DIR/boost" .
     make -j$(nproc)
     make install
 
@@ -358,11 +358,11 @@ install_php
 configure_nginx_php
 
 # Path updates and symlinks
-export PATH="/opt/nginx/sbin:/opt/php/bin:/opt/php/sbin:/opt/mariadb/bin:$PATH"
-ln -sf /opt/nginx/sbin/nginx /usr/local/bin/nginx
-ln -sf /opt/php/bin/php /usr/local/bin/php
-ln -sf /opt/php/sbin/php-fpm /usr/local/bin/php-fpm
-ln -sf /opt/mariadb/bin/mariadb /usr/local/bin/mysql
+export PATH="$INSTALL_DIR/nginx/sbin:$INSTALL_DIR/php/bin:$INSTALL_DIR/php/sbin:$INSTALL_DIR/mariadb/bin:$PATH"
+ln -sf "$INSTALL_DIR/nginx/sbin/nginx" /usr/local/bin/nginx
+ln -sf "$INSTALL_DIR/php/bin/php" /usr/local/bin/php
+ln -sf "$INSTALL_DIR/php/sbin/php-fpm" /usr/local/bin/php-fpm
+ln -sf "$INSTALL_DIR/mariadb/bin/mariadb" /usr/local/bin/mysql
 
 # Test setup
 echo "Testing LNMP setup..."
