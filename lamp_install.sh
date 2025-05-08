@@ -339,8 +339,6 @@ export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/openssl/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/openssl/lib"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/openssl/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/openssl/lib"
-export OPENSSL_CFLAGS="-I$INSTALL_DIR/openssl/include"
-export OPENSSL_LIBS="-L$INSTALL_DIR/openssl/lib -lssl -lcrypto"
 
 install_jemalloc
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/jemalloc/lib"
