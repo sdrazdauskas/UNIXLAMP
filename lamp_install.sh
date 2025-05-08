@@ -25,6 +25,7 @@ fi
 
 # Install system build dependencies
 apt-get update
+apt-get upgrade
 apt-get install -y build-essential pkg-config cmake bison git wget tar \
     libncurses5-dev libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev \
     libmcrypt-dev libreadline-dev libonig-dev libzip-dev re2c autoconf openssl libssl-dev \
