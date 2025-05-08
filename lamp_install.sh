@@ -28,7 +28,7 @@ fi
 apt-get update
 apt-get install -y build-essential pkg-config cmake bison git wget tar \
     libncurses5-dev libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev \
-    libmcrypt-dev libreadline-dev libonig-dev libzip-dev re2c autoconf openssl libssl-dev \
+    libmcrypt-dev libreadline-dev libonig-dev libzip-dev re2c autoconf \
     python3.11-dev python3-pip openjdk-17-jdk libsqlite3-dev libgnutls28-dev libsystemd-dev xz-utils
 
 # Create source directory
@@ -329,14 +329,15 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 install_openssl
 export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/openssl/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/openssl/lib"
-export LD_LIBRARY_PATH="$INSTALL_DIR/openssl/lib:$LD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/openssl/lib/pkgconfig"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/openssl/lib"
 
 install_jemalloc
-export LD_LIBRARY_PATH="$INSTALL_DIR/jemalloc/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/jemalloc/lib"
 
 install_boost
-export CPPFLAGS="-I$INSTALL_DIR/boost/include $CPPFLAGS"
-export LIBRARY_PATH="$INSTALL_DIR/boost/lib:$LIBRARY_PATH"
+export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/boost/include"
+export LIBRARY_PATH="$LIBRARY_PATH:$INSTALL_DIR/boost/lib"
 
 # Web server user
 getent group www-data || groupadd www-data
