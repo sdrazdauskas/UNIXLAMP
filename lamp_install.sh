@@ -7,7 +7,7 @@ INSTALL_DIR="/opt"
 NGINX_VERSION="1.27.5"
 MARIADB_VERSION="11.7.2"
 PHP_VERSION="8.4.5"
-PCRE2_VERSION="10.45"
+PCRE2_VERSION="10.44"
 LIBXML2_VERSION="2.9.14"
 ZLIB_VERSION="1.3.1"
 OPENSSL_VERSION="3.5.0"
@@ -73,7 +73,7 @@ install_libxml2() {
 install_pcre() {
     echo "Installing PCRE2..."
     download_and_extract "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$PCRE2_VERSION/pcre2-$PCRE2_VERSION.tar.gz" "pcre2-$PCRE2_VERSION"
-    ./configure --prefix="$INSTALL_DIR/pcre2"
+    ./configure --prefix="$INSTALL_DIR/pcre2" --enable-shared --enable-pcre2-posix
     make -j$(nproc)
     make install
 }
@@ -327,8 +327,8 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
 install_openssl
-export CPPFLAGS="-I$INSTALL_DIR/openssl/include"
-export LDFLAGS="-L$INSTALL_DIR/openssl/lib"
+export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/openssl/include"
+export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/openssl/lib"
 export LD_LIBRARY_PATH="$INSTALL_DIR/openssl/lib:$LD_LIBRARY_PATH"
 
 install_jemalloc
