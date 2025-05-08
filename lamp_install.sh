@@ -129,12 +129,9 @@ install_mariadb() {
     echo "Installing MariaDB..."
     download_and_extract "https://mirror.mariadb.org/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
     cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" \
-        -DWITH_JEMALLOC=ON \
-        -DJEMALLOC_LIBRARY="$INSTALL_DIR/jemalloc/lib/libjemalloc.so" \
-        -DBOOST_ROOT="$INSTALL_DIR/boost" \
-        -DOPENSSL_ROOT_DIR="$INSTALL_DIR/openssl" \
-        -DOPENSSL_INCLUDE_DIR="$INSTALL_DIR/openssl/include" \
-        .
+          -DWITH_JEMALLOC=ON \
+          -DJEMALLOC_LIBRARY="/opt/jemalloc/lib/libjemalloc.so" \
+          -DBOOST_ROOT="/opt/boost" .
     make -j$(nproc)
     make install
 
@@ -338,7 +335,6 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 install_openssl
 export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/openssl/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/openssl/lib"
-export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/openssl/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/openssl/lib"
 
 install_jemalloc
