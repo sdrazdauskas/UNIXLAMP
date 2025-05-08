@@ -150,7 +150,7 @@ After=network.target
 User=mysql
 Group=mysql
 ExecStart=$INSTALL_DIR/mariadb/bin/mysqld_safe --datadir=$INSTALL_DIR/mariadb/data
-ExecStop=$INSTALL_DIR/mariadb/bin/mysqladmin shutdown
+ExecStop=$INSTALL_DIR/mariadb/bin/mariadb-admin shutdown
 Restart=on-failure
 
 [Install]
@@ -160,7 +160,7 @@ EOF
     systemctl enable mariadb
     systemctl start mariadb
     echo "Waiting for MariaDB to be ready..."
-    while ! "$INSTALL_DIR/mariadb/bin/mysqladmin" ping --silent --host=127.0.0.1; do
+    while ! "$INSTALL_DIR/mariadb/bin/mariadb-admin" ping --silent --host=127.0.0.1; do
         sleep 1
     done
     "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
@@ -199,7 +199,7 @@ install_php() {
         sed -i 's/group = nobody/group = www-data/' "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
     fi
 
-    # Create log directory and adjust its permissions so www-data can write the error log
+    # Set permissions just in case
     mkdir -p "$INSTALL_DIR/php/var/log"
     chown -R www-data:www-data "$INSTALL_DIR/php/var/log"
     chmod -R 755 "$INSTALL_DIR/php/var/log"
@@ -251,7 +251,7 @@ http {
         server_name localhost;
 
         root /var/www/html;
-        index index.php index.html;
+        index index.php index.html info.php;
 
         location ~ \.php\$ {
             fastcgi_pass   127.0.0.1:9000;
@@ -265,6 +265,7 @@ EOF
     mkdir -p /var/www/html
     echo "<?php phpinfo(); ?>" > /var/www/html/info.php
 
+    # Create a systemd unit file for NGINX
     cat > /etc/systemd/system/nginx.service <<-EOF
 [Unit]
 Description=The NGINX HTTP and reverse proxy server
@@ -274,15 +275,16 @@ Wants=network-online.target
 [Service]
 Type=forking
 PIDFile=/run/nginx.pid
-ExecStartPre=/opt/nginx/sbin/nginx -t
-ExecStart=/opt/nginx/sbin/nginx
-ExecReload=/opt/nginx/sbin/nginx -s reload
+ExecStartPre=$INSTALL_DIR/nginx/sbin/nginx -t
+ExecStart=$INSTALL_DIR/nginx/sbin/nginx
+ExecReload=$INSTALL_DIR/nginx/sbin/nginx -s reload
 ExecStop=/bin/kill -s QUIT \$MAINPID
 PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
 EOF
+
     systemctl daemon-reload
     systemctl enable nginx
     systemctl start nginx
