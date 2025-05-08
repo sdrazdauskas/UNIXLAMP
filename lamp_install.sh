@@ -16,6 +16,7 @@ JEMALLOC_VERSION="5.3.0"
 BOOST_VERSION="1.86.0"
 DB_USER="dbadmin"
 DB_PASSWORD="Unix2025"
+MARIADB_ROOT_PASSWORD=RTUnix2025
 REMOTE_IP="10.1.0.73"
 
 # Root check
@@ -156,13 +157,19 @@ Restart=on-failure
 [Install]
 WantedBy=multi-user.target
 EOF
+
     systemctl daemon-reload
     systemctl enable mariadb
     systemctl start mariadb
+
     echo "Waiting for MariaDB to be ready..."
     while ! "$INSTALL_DIR/mariadb/bin/mariadb-admin" ping --silent --host=127.0.0.1; do
         sleep 1
     done
+
+    # Set root password so we can login to check
+    "$INSTALL_DIR/mariadb/bin/mariadb" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MARIADB_ROOT_PASSWORD'; FLUSH PRIVILEGES;"
+    # Set up the required account
     "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
 }
 
