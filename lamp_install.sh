@@ -214,6 +214,7 @@ configure_nginx_php() {
     cat > "$INSTALL_DIR/nginx/conf/nginx.conf" <<-EOF
 user www-data;
 worker_processes 1;
+pid /run/nginx.pid;
 events { worker_connections 1024; }
 
 http {
