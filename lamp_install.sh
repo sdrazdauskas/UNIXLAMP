@@ -81,6 +81,16 @@ install_pcre() {
 install_openssl() {
     echo "Installing OpenSSL..."
     download_and_extract "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" "openssl-$OPENSSL_VERSION"
+    ./config --prefix="$INSTALL_DIR/openssl" \
+             --openssldir="$INSTALL_DIR/openssl" \
+             shared \
+             zlib-dynamic \
+             no-ssl3 \
+             no-ssl3-method \
+             no-comp \
+             -O3
+    make -j$(nproc)
+    make install
 }
 
 install_jemalloc() {
@@ -111,6 +121,8 @@ install_nginx() {
         --with-openssl="$SRC_DIR/openssl-$OPENSSL_VERSION"
     make -j$(nproc)
     make install
+    chown -R www-data:www-data /opt/nginx/conf
+    chmod -R 755 /opt/nginx/conf
 }
 
 install_mariadb() {
@@ -168,17 +180,29 @@ install_php() {
     make -j$(nproc)
     make install
 
-    # Create config
+    # Create php.ini
     cp php.ini-development "$INSTALL_DIR/php/lib/php.ini" || true
+
+    # Ensure the PHP-FPM configuration directory exists
+    mkdir -p "$INSTALL_DIR/php/etc"
+
+    # Copy the main PHP-FPM configuration file if it doesn't exist
     if [ ! -f "$INSTALL_DIR/php/etc/php-fpm.conf" ]; then
         cp "$SRC_DIR/php-$PHP_VERSION/sapi/fpm/php-fpm.conf" "$INSTALL_DIR/php/etc/php-fpm.conf"
     fi
+
+    # Create PHP-FPM pool configuration
     if [ ! -f "$INSTALL_DIR/php/etc/php-fpm.d/www.conf" ]; then
         mkdir -p "$INSTALL_DIR/php/etc/php-fpm.d"
         cp "$SRC_DIR/php-$PHP_VERSION/sapi/fpm/www.conf" "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
         sed -i 's/user = nobody/user = www-data/' "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
         sed -i 's/group = nobody/group = www-data/' "$INSTALL_DIR/php/etc/php-fpm.d/www.conf"
     fi
+
+    # Create log directory and adjust its permissions so www-data can write the error log
+    mkdir -p "$INSTALL_DIR/php/var/log"
+    chown -R www-data:www-data "$INSTALL_DIR/php/var/log"
+    chmod -R 755 "$INSTALL_DIR/php/var/log"
 
     # Create a systemd service unit for PHP-FPM
     cat > /etc/systemd/system/php-fpm.service <<-EOF
@@ -303,6 +327,10 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/pcre2/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/pcre2/lib"
 
 install_openssl
+export CPPFLAGS="-I$INSTALL_DIR/openssl/include"
+export LDFLAGS="-L$INSTALL_DIR/openssl/lib"
+export LD_LIBRARY_PATH="$INSTALL_DIR/openssl/lib:$LD_LIBRARY_PATH"
+
 install_jemalloc
 export LD_LIBRARY_PATH="$INSTALL_DIR/jemalloc/lib:$LD_LIBRARY_PATH"
 
