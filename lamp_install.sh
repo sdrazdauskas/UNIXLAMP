@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 # Variables
 SRC_DIR="/opt/src"
@@ -16,7 +15,6 @@ JEMALLOC_VERSION="5.3.0"
 BOOST_VERSION="1.86.0"
 DB_USER="dbadmin"
 DB_PASSWORD="Unix2025"
-MARIADB_ROOT_PASSWORD=RTUnix2025
 REMOTE_IP="10.1.0.73"
 
 # Root check
@@ -29,7 +27,7 @@ fi
 apt-get update
 apt-get install -y build-essential pkg-config cmake bison git wget tar \
     libncurses5-dev libcurl4-openssl-dev libpng-dev libxpm-dev libfreetype6-dev \
-    libmcrypt-dev libreadline-dev libonig-dev libzip-dev re2c autoconf \
+    libmcrypt-dev libreadline-dev libonig-dev libzip-dev re2c autoconf openssl libssl-dev \
     python3.11-dev python3-pip openjdk-17-jdk libsqlite3-dev libgnutls28-dev libsystemd-dev xz-utils
 
 # Create source directory
@@ -130,9 +128,12 @@ install_mariadb() {
     echo "Installing MariaDB..."
     download_and_extract "https://mirror.mariadb.org/mariadb-$MARIADB_VERSION/source/mariadb-$MARIADB_VERSION.tar.gz" "mariadb-$MARIADB_VERSION"
     cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR/mariadb" \
-          -DWITH_JEMALLOC=ON \
-          -DJEMALLOC_LIBRARY="$INSTALL_DIR/jemalloc/lib/libjemalloc.so" \
-          -DBOOST_ROOT="$INSTALL_DIR/boost" .
+        -DWITH_JEMALLOC=ON \
+        -DJEMALLOC_LIBRARY="$INSTALL_DIR/jemalloc/lib/libjemalloc.so" \
+        -DBOOST_ROOT="$INSTALL_DIR/boost" \
+        -DOPENSSL_ROOT_DIR="$INSTALL_DIR/openssl" \
+        -DOPENSSL_INCLUDE_DIR="$INSTALL_DIR/openssl/include" \
+        .
     make -j$(nproc)
     make install
 
@@ -150,7 +151,7 @@ After=network.target
 [Service]
 User=mysql
 Group=mysql
-ExecStart=$INSTALL_DIR/mariadb/bin/mysqld_safe --datadir=$INSTALL_DIR/mariadb/data
+ExecStart=$INSTALL_DIR/mariadb/bin/mariadbd-safe --datadir=$INSTALL_DIR/mariadb/data
 ExecStop=$INSTALL_DIR/mariadb/bin/mariadb-admin shutdown
 Restart=on-failure
 
@@ -167,8 +168,6 @@ EOF
         sleep 1
     done
 
-    # Set root password so we can login to check
-    "$INSTALL_DIR/mariadb/bin/mariadb" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MARIADB_ROOT_PASSWORD'; FLUSH PRIVILEGES;"
     # Set up the required account
     "$INSTALL_DIR/mariadb/bin/mariadb" -e "CREATE USER '$DB_USER'@'$REMOTE_IP' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$REMOTE_IP'; FLUSH PRIVILEGES;"
 }
@@ -340,6 +339,8 @@ export CPPFLAGS="$CPPFLAGS -I$INSTALL_DIR/openssl/include"
 export LDFLAGS="$LDFLAGS -L$INSTALL_DIR/openssl/lib"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$INSTALL_DIR/openssl/lib/pkgconfig"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/openssl/lib"
+export OPENSSL_CFLAGS="-I$INSTALL_DIR/openssl/include"
+export OPENSSL_LIBS="-L$INSTALL_DIR/openssl/lib -lssl -lcrypto"
 
 install_jemalloc
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$INSTALL_DIR/jemalloc/lib"
